@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Pedigree Collapase Calculator")]
+[assembly: AssemblyTitle("Pedigree Collapse Calculator")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Genetic Genealogy Tools")]
-[assembly: AssemblyProduct("Pedigree Collapase Calculator")]
+[assembly: AssemblyProduct("Pedigree Collapse Calculator")]
 [assembly: AssemblyCopyright("Copyright © Felix Chandrakumar 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
