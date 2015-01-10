@@ -27,6 +27,7 @@ namespace Collapse_Calculator
         long m_AllowedErrors = 1;
         Dictionary<int, string> message = new Dictionary<int, string>();
         long m_match_error_count=0;
+        int segcount = 0;
         public CollapseCalcFrm()
         {
             InitializeComponent();
@@ -36,13 +37,13 @@ namespace Collapse_Calculator
         {
            m_AllowedErrors = (long)(m_SNPs * 4 / 100); //allow 4% errors
 
-           message.Add(0, "Your parents are not only siblings (incest) but their parents are also siblings (incest for multiple generations).");
-           message.Add(1, "Your parents are siblings (incest).");
-           message.Add(2, "Your parents are first cousins.");
-           message.Add(3, "Your parents are second cousins.");
-           message.Add(4, "Your parents are third cousins.");
-           message.Add(5, "Your parents are fourth cousins.");
-           message.Add(6, "Your parents are fifth cousins.");
+           message.Add(0, "Based on @segcount@ ROH segments, your parents may not only be siblings (incest) but their parents might also be siblings (incest for multiple generations).");
+           message.Add(1, "Based on @segcount@ ROH segments, your parents may be siblings (incest).");
+           message.Add(2, "Based on @segcount@ ROH segments, your parents may be first cousins.");
+           message.Add(3, "Based on @segcount@ ROH segments, your parents may be second cousins.");
+           message.Add(4, "Based on @segcount@ ROH segments, your parents may be third cousins.");
+           message.Add(5, "Based on @segcount@ ROH segments, your parents may be fourth cousins.");
+           message.Add(6, "Based on @segcount@ ROH segments, your parents may be fifth cousins.");
         }
 
         public byte[] Zip(byte[] bytes)
@@ -98,7 +99,23 @@ namespace Collapse_Calculator
                 neanPercent.ForeColor = Color.Gray;
                 statusLbl.Text = "Calculating ...";
                 button1.Enabled = false;
-                backgroundWorker2.RunWorkerAsync();
+                segcount = 0;
+                //
+                try
+                {
+                    m_AllowedErrors = long.Parse(tb_AllowedErrors.Text);
+                    m_BasePairs = long.Parse(tb_BasePairs.Text);
+                    m_GapToBreak = long.Parse(tb_GapToBreak.Text);
+                    m_SNPs = long.Parse(tb_SNPs.Text);
+                    m_match_no_call = cb_MatchNoCall.Checked;
+                    backgroundWorker2.RunWorkerAsync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                
             }
         }
 
@@ -154,6 +171,7 @@ namespace Collapse_Calculator
             int i_chr=-1;
             int snp_count = 0;
             m_match_error_count = 0;
+            segcount = 0;
             while ((line = reader.ReadLine()) != null)
             {
                 if (line.StartsWith("#") || line.StartsWith("RSID"))
@@ -173,7 +191,10 @@ namespace Collapse_Calculator
                 if (!isMatch(data[3], snp_count) || chr != pchr || long.Parse(data[2]) - segment_end > m_GapToBreak)
                 {
                     if (segment_end - segment_start >= m_BasePairs && snp_count > m_SNPs)
+                    {
                         match_bp = match_bp + (segment_end - segment_start);
+                        segcount++;
+                    }
 
                     segment_start = long.Parse(data[2]);
                     snp_count = 0;
@@ -212,26 +233,33 @@ namespace Collapse_Calculator
             neanPercent.ForeColor = Color.Black;
             statusLbl.Text = "";
             button1.Enabled = true;
-
-            if (percent >= 50)
+            try
             {
-                MessageBox.Show(message[0], "Result", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else
-            {
-                double total = 50;                
-                for (int i = 0; i < 100; i++)
+                if (percent >= 50)
                 {
-                    if (total / Math.Pow(2, i) > percent && percent > total / Math.Pow(2, i + 1))
+                    MessageBox.Show(message[0].Replace("@segcount@", segcount.ToString()), "Result", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    double total = 50;
+                    for (int i = 0; i < 100; i++)
                     {
-                        if (total / Math.Pow(2, i) - percent > percent - total / Math.Pow(2, i + 1))
-                            MessageBox.Show(message[i + 1], "Result", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        else
-                            MessageBox.Show(message[i], "Result", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        break;
+                        if (total / Math.Pow(2, i) > percent && percent > total / Math.Pow(2, i + 1))
+                        {
+                            if (total / Math.Pow(2, i) - percent > percent - total / Math.Pow(2, i + 1))
+                                MessageBox.Show(message[i + 1].Replace("@segcount@", segcount.ToString()), "Result", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            else
+                                MessageBox.Show(message[i].Replace("@segcount@", segcount.ToString()), "Result", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            break;
+                        }
                     }
                 }
             }
+            catch (Exception)
+            {
+                               
+            }
+            
         }   
     }
 }
